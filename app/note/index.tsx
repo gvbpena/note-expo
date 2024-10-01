@@ -7,6 +7,7 @@ import { Ionicons } from "@expo/vector-icons"; // Import Ionicons for the delete
 import { createNote } from "../../services/note_service";
 import { observeAuthState } from "../../services/auth_service";
 import { getAuth } from "@firebase/auth";
+import { useNavigation } from "@react-navigation/native"; // Import useNavigation
 
 const INITIAL_REGION = {
     latitude: 37.78825,
@@ -16,6 +17,7 @@ const INITIAL_REGION = {
 };
 
 const AddNotemap = () => {
+    const navigation = useNavigation(); // Get the navigation prop
     const [markerPosition, setMarkerPosition] = useState<LatLng | null>(null);
     const [markerText, setMarkerText] = useState<string>("");
     const mapRef = useRef<MapView>(null);
@@ -119,6 +121,7 @@ const AddNotemap = () => {
             try {
                 await createNote(data);
                 Alert.alert("Note Saved");
+                navigation.goBack(); // Navigate back after saving
             } catch (error: unknown) {
                 if (error instanceof Error) {
                     Alert.alert("Error Saving Note", error.message);
@@ -247,48 +250,49 @@ const styles = StyleSheet.create({
         color: "#333",
     },
     descriptionInput: {
-        height: 100,
-        verticalAlign: "top",
-    },
-    textContainer: {
-        marginVertical: 10,
-        padding: 10,
-        backgroundColor: "white",
-    },
-    text: {
-        fontSize: 16,
-        color: "#333",
+        // Add this style
+        height: 100, // Adjust height as needed
+        textAlignVertical: "top", // Ensures text starts at the top of the input
     },
     loadingIndicator: {
-        marginVertical: 20,
-    },
-    button: {
-        backgroundColor: "#7B7F5E",
-        borderRadius: 10,
-        padding: 15,
-        alignItems: "center",
-        marginVertical: 10,
-    },
-    saveButton: {
-        backgroundColor: "#4CAF50", // Change the button color for Save
-    },
-    buttonText: {
-        color: "white",
-        fontSize: 16,
+        marginTop: 20,
     },
     map: {
         width: "100%",
-        height: 300,
+        height: 400,
+        marginBottom: 10,
     },
     noMapContainer: {
         justifyContent: "center",
         alignItems: "center",
-        height: 300,
+        height: 400,
         backgroundColor: "#f0f0f0",
+        marginBottom: 10,
     },
     noMapText: {
-        fontSize: 16,
         color: "#888",
+    },
+    saveButton: {
+        backgroundColor: "#7B7F5E",
+    },
+    text: {
+        fontSize: 16,
+        marginTop: 5,
+    },
+    textContainer: {
+        paddingHorizontal: 20,
+    },
+    button: {
+        backgroundColor: "#7B7F5E",
+        padding: 15,
+        borderRadius: 10,
+        alignItems: "center",
+        marginVertical: 10,
+    },
+    buttonText: {
+        color: "#fff",
+        fontSize: 18,
+        fontWeight: "bold",
     },
 });
 

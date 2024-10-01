@@ -34,7 +34,7 @@ const NoteList = () => {
             <TouchableOpacity onPress={() => router.push(`/item/${item.id}`)}>
                 <Text style={styles.title}>{item.title}</Text>
             </TouchableOpacity>
-            <Text style={styles.date}>Created At: {new Date(item.createdAt.seconds * 1000).toLocaleDateString()}</Text>
+            <Text style={styles.date}>{item.createdAt}</Text>
         </View>
     );
 

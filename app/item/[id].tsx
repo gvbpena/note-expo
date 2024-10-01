@@ -1,23 +1,24 @@
 import React, { useEffect, useState } from "react";
 import { Text, View, StyleSheet, ScrollView, Image } from "react-native";
-import { useLocalSearchParams } from "expo-router"; // Ensure you have this installed
+import { useLocalSearchParams } from "expo-router";
 import { getSpecificNoteDataById } from "../../services/note_service";
+import MapView, { Marker } from "react-native-maps"; // Import MapView and Marker
 
 interface Note {
     id?: string;
     title?: string;
-    description?: string; // Include description in the interface
+    description?: string;
     location?: {
         latitude: number;
         longitude: number;
     };
-    imageUrls?: string[]; // Assuming imageUrls will be an array of strings
+    imageUrls?: string[];
     createdAt?: string;
     authorId?: string;
 }
 
 const NoteDetails: React.FC = () => {
-    const { id } = useLocalSearchParams(); // Get the note ID from the params
+    const { id } = useLocalSearchParams();
     const [noteData, setNoteData] = useState<Note | null>(null);
 
     useEffect(() => {
@@ -46,8 +47,6 @@ const NoteDetails: React.FC = () => {
             <Text style={styles.title}>{noteData.title}</Text>
             <Text style={styles.author}>Author: {noteData.authorId}</Text>
             <Text style={styles.createdAt}>Created At: {new Date(noteData.createdAt!).toLocaleString()}</Text>
-
-            {/* Displaying the description as specified */}
             <Text style={styles.descriptionHeader}>Description:</Text>
             <Text style={styles.description}>{noteData.description}</Text>
 
@@ -56,6 +55,27 @@ const NoteDetails: React.FC = () => {
                 <Text style={styles.location}>
                     [{noteData.location.latitude}° N, {noteData.location.longitude}° E]
                 </Text>
+            )}
+
+            {noteData.location && (
+                <MapView
+                    style={styles.map}
+                    initialRegion={{
+                        latitude: noteData.location.latitude,
+                        longitude: noteData.location.longitude,
+                        latitudeDelta: 0.01,
+                        longitudeDelta: 0.01,
+                    }}
+                >
+                    <Marker
+                        coordinate={{
+                            latitude: noteData.location.latitude,
+                            longitude: noteData.location.longitude,
+                        }}
+                        title="Note Location"
+                        description={noteData.description}
+                    />
+                </MapView>
             )}
 
             {noteData.imageUrls && noteData.imageUrls.length > 0 && (
@@ -119,6 +139,12 @@ const styles = StyleSheet.create({
         fontSize: 16,
         marginBottom: 20,
         color: "#555",
+    },
+    map: {
+        width: "100%",
+        height: 300,
+        borderRadius: 10,
+        marginBottom: 20,
     },
     imageContainer: {
         marginTop: 10,

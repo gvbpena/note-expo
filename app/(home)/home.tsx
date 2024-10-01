@@ -6,12 +6,6 @@ import { Href, Link, router } from "expo-router";
 import NoteList from "../../components/note_list";
 
 const Home = () => {
-    const handleAddNote = () => {
-        // Logic for adding a new note (navigate or action)
-        console.log("Add Note button pressed");
-        router.push("note/add" as Href);
-    };
-
     return (
         <View style={styles.container}>
             <Text style={styles.welcomeText}>Welcome to Notemap</Text>
