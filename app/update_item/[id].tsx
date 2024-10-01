@@ -4,6 +4,7 @@ import MapView, { Marker, Callout, PROVIDER_GOOGLE, Region, LatLng } from "react
 import * as ImagePicker from "expo-image-picker";
 import { Ionicons } from "@expo/vector-icons";
 import { createNote, updateNote, getNoteById } from "../../services/note_service"; // Import updateNote and getNoteById
+import { useLocalSearchParams } from "expo-router"; // Import useLocalSearchParams for id handling
 
 const INITIAL_REGION = {
     latitude: 37.78825,
@@ -11,10 +12,6 @@ const INITIAL_REGION = {
     latitudeDelta: 0.0922,
     longitudeDelta: 0.0421,
 };
-
-interface AddNoteMapProps {
-    noteId?: string; // Optional ID for updates
-}
 
 interface Note {
     id?: string;
@@ -27,7 +24,8 @@ interface Note {
     images?: string[];
 }
 
-const AddNotemap: React.FC<AddNoteMapProps> = ({ noteId }) => {
+const AddNotemap: React.FC = () => {
+    const { id } = useLocalSearchParams(); // Use id from local search params
     const [markerPosition, setMarkerPosition] = useState<LatLng | null>(null);
     const [markerText, setMarkerText] = useState<string>("");
     const mapRef = useRef<MapView>(null);
@@ -39,9 +37,9 @@ const AddNotemap: React.FC<AddNoteMapProps> = ({ noteId }) => {
 
     useEffect(() => {
         const fetchNoteData = async () => {
-            if (noteId) {
+            if (id) {
                 try {
-                    const response = await getNoteById(noteId);
+                    const response = await getNoteById(id as string);
                     console.log(response); // Log the response to verify its structure
                     const note: Note = response; // Ensure it matches the Note type
                     setNoteData(note);
@@ -52,7 +50,7 @@ const AddNotemap: React.FC<AddNoteMapProps> = ({ noteId }) => {
         };
 
         fetchNoteData();
-    }, [noteId]);
+    }, [id]);
 
     if (noteData) {
         console.log(noteData.title); // This should work without errors
@@ -60,17 +58,6 @@ const AddNotemap: React.FC<AddNoteMapProps> = ({ noteId }) => {
     if (!noteData) {
         return <Text>Loading...</Text>; // Handle loading state
     }
-
-    // const loadNoteData = async (id: string) => {
-    //     const noteData = await getNoteById(id);
-    //     if (noteData) {
-    //         setTitle(noteData.title);
-    //         setDescription(noteData.content);
-    //         setMarkerPosition(noteData.location);
-    //         setSelectedImages(noteData.images);
-    //         setMarkerText(`Location at Lat: ${noteData.location?.latitude.toFixed(4)}, Lon: ${noteData.location?.longitude.toFixed(4)}`);
-    //     }
-    // };
 
     const handleMapPress = (event: any) => {
         const { latitude, longitude } = event.nativeEvent.coordinate;
@@ -165,8 +152,8 @@ const AddNotemap: React.FC<AddNoteMapProps> = ({ noteId }) => {
             };
 
             try {
-                if (noteId) {
-                    await updateNote(noteId, data); // Update note if ID is provided
+                if (id) {
+                    await updateNote(id as string, data); // Update note if ID is provided
                     Alert.alert("Note Updated");
                 } else {
                     await createNote(data); // Create new note
@@ -287,50 +274,47 @@ const styles = StyleSheet.create({
         paddingVertical: 12,
         paddingHorizontal: 15,
         borderRadius: 10,
-        borderColor: "#e0e0e0",
         borderWidth: 1,
+        borderColor: "#ddd",
+        fontSize: 16,
         marginBottom: 10,
     },
     descriptionInput: {
         height: 100,
     },
+    map: {
+        width: "100%",
+        height: 400,
+    },
+    noMapContainer: {
+        flex: 1,
+        justifyContent: "center",
+        alignItems: "center",
+    },
+    noMapText: {
+        fontSize: 18,
+    },
+    textContainer: {
+        padding: 10,
+    },
+    text: {
+        fontSize: 14,
+    },
     button: {
-        backgroundColor: "#007bff",
-        paddingVertical: 12,
+        backgroundColor: "#007BFF",
+        paddingVertical: 10,
+        paddingHorizontal: 20,
         borderRadius: 10,
         marginVertical: 10,
+        marginHorizontal: 20,
+        alignItems: "center",
     },
     saveButton: {
         backgroundColor: "#28a745",
     },
     buttonText: {
         color: "white",
-        textAlign: "center",
         fontSize: 16,
-    },
-    map: {
-        width: "100%",
-        height: 300,
-    },
-    noMapContainer: {
-        justifyContent: "center",
-        alignItems: "center",
-        height: 300,
-    },
-    noMapText: {
-        fontSize: 18,
-        color: "#888",
-    },
-    textContainer: {
-        marginTop: 10,
-        padding: 10,
-        backgroundColor: "rgba(255, 255, 255, 0.8)",
-        borderRadius: 8,
-        elevation: 3,
-    },
-    text: {
-        fontSize: 16,
-        color: "#000",
     },
 });
 

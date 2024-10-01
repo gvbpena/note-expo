@@ -21,8 +21,8 @@ const Layout = () => {
                     text: "Delete",
                     onPress: async () => {
                         try {
-                            await deleteNote(id as string); // Call delete function with id
-                            navigation.goBack(); // Navigate back after deletion
+                            await deleteNote(id as string);
+                            navigation.goBack();
                         } catch (error) {
                             if (error instanceof Error) {
                                 Alert.alert("Error", error.message);
@@ -43,10 +43,10 @@ const Layout = () => {
             screenOptions={{
                 headerStyle: { backgroundColor: "#fff" },
                 headerTitleAlign: "center",
-                headerTitle: "View",
+                headerTitle: "view",
                 headerRight: () => (
                     <View style={{ flexDirection: "row", alignItems: "center" }}>
-                        <Link href={`/update_item/${id}`} asChild>
+                        <Link href={`/update_item/${id as string}`} asChild>
                             <Pressable>
                                 <Icon name="edit" size={24} color="#000" style={{ marginRight: 15 }} />
                             </Pressable>

@@ -1,6 +1,18 @@
 import { firestore } from "./firebase"; // Ensure this path is correct
 import { collection, doc, setDoc, updateDoc, getDoc, getDocs, deleteDoc } from "firebase/firestore";
 
+export interface Note {
+    id?: string;
+    title?: string;
+    description?: string;
+    location?: {
+        latitude: number;
+        longitude: number;
+    };
+    imageUrls?: string[];
+    createdAt?: string;
+    authorId?: string;
+}
 // Create a new note
 export const createNote = async (data: any) => {
     try {
@@ -59,7 +71,9 @@ export const getAllNotes = async () => {
             notes.push({
                 id: doc.id,
                 title: data.title,
-                createdAt: data.createdAt,
+                content: data.content,
+                location: data.location,
+                images: data.images,
             });
         });
         return notes;

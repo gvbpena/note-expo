@@ -5,23 +5,18 @@ import { onAuthStateChanged } from "firebase/auth";
 import { auth } from "../services/firebase";
 
 const Index = () => {
-    const [isLoading, setIsLoading] = useState(true); // Track loading state
-    const [isLoggedIn, setIsLoggedIn] = useState<boolean | null>(null); // Track login status
+    const [isLoggedIn, setIsLoggedIn] = useState<boolean | null>(null);
 
     useEffect(() => {
         const unsubscribe = onAuthStateChanged(auth, (user) => {
-            if (user) {
-                setIsLoggedIn(true);
-            } else {
-                setIsLoggedIn(false);
-            }
-            setIsLoading(false);
+            setIsLoggedIn(!!user); // Sets to true if user exists, otherwise false
         });
-        return () => unsubscribe();
+
+        return unsubscribe; // Cleanup the listener on component unmount
     }, []);
 
-    if (isLoading) {
-        // Show loading indicator while checking authentication status
+    if (isLoggedIn === null) {
+        // Still loading
         return (
             <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
                 <ActivityIndicator size="large" color="#0000ff" />
@@ -29,11 +24,7 @@ const Index = () => {
         );
     }
 
-    if (isLoggedIn) {
-        return <Redirect href="/home" />; // Redirect to home if logged in
-    } else {
-        return <Redirect href="/login" />; // Redirect to login if not logged in
-    }
+    return <Redirect href={isLoggedIn ? "/home" : "/login"} />;
 };
 
-export default Index;
+export default React.memo(Index);
