@@ -36,22 +36,15 @@ const NoteList = () => {
         }, [])
     );
 
-    const formatDate = (dateString: string) => {
-        const date = new Date(dateString);
-        const options: Intl.DateTimeFormatOptions = {
-            year: "numeric",
-            month: "short",
-            day: "numeric",
-        };
-        return date.toLocaleDateString(undefined, options); // Format the date
-    };
-
     const renderItem = ({ item }: { item: Note }) => (
         <View style={styles.itemContainer}>
             <TouchableOpacity onPress={() => router.push(`/note_view/${item.id}`)}>
-                <Text style={styles.title}>{item.title}</Text>
+                <Text style={styles.title}>
+                    {item.title}
+                    {item.createdAt}
+                </Text>
             </TouchableOpacity>
-            <Text style={styles.date}>{formatDate(item.createdAt)}</Text>
+            <Text style={styles.date}>{item.createdAt}</Text>
         </View>
     );
 

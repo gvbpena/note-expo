@@ -43,20 +43,20 @@ const Layout = () => {
                 headerStyle: { backgroundColor: "#fff" },
                 headerTitleAlign: "center",
                 headerTitle: "Edit",
-                headerRight: () => (
-                    <View style={{ flexDirection: "row", marginRight: 10 }}>
-                        {id && (
-                            <Pressable
-                                style={styles.saveButton}
-                                onPress={() => {
-                                    /* Handle save logic here */
-                                }}
-                            >
-                                <Text style={styles.saveButtonText}>Save</Text>
-                            </Pressable>
-                        )}
-                    </View>
-                ),
+                // headerRight: () => (
+                //     <View style={{ flexDirection: "row", marginRight: 10 }}>
+                //         {id && (
+                //             <Pressable
+                //                 style={styles.saveButton}
+                //                 onPress={() => {
+                //                     /* Handle save logic here */
+                //                 }}
+                //             >
+                //                 <Text style={styles.saveButtonText}>Save</Text>
+                //             </Pressable>
+                //         )}
+                //     </View>
+                // ),
             }}
         />
     );

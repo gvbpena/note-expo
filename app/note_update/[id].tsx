@@ -4,8 +4,9 @@ import MapView, { Marker, Callout, PROVIDER_GOOGLE, Region, LatLng } from "react
 import * as ImagePicker from "expo-image-picker";
 import { Ionicons } from "@expo/vector-icons";
 import { createNote, updateNote, getNoteById, removeImageFromNote } from "../../services/note_service"; // Import updateNote and getNoteById
-import { useLocalSearchParams, useNavigation } from "expo-router"; // Import useLocalSearchParams for id handling
+import { useLocalSearchParams } from "expo-router"; // Import useLocalSearchParams for id handling
 import { getAuth } from "firebase/auth";
+import { useNavigation } from "@react-navigation/native"; // Import useNavigation for navigation
 
 interface Note {
     id?: string;
@@ -21,6 +22,8 @@ interface Note {
 
 const UpdateNoteMap: React.FC = () => {
     const { id } = useLocalSearchParams(); // Use id from local search params
+    const navigation = useNavigation(); // Initialize navigation
+    const [loading, setLoading] = useState(false); // Loading state
     const [markerPosition, setMarkerPosition] = useState<LatLng | null>(null);
     const [markerText, setMarkerText] = useState<string>("");
     const mapRef = useRef<MapView>(null);
@@ -33,11 +36,12 @@ const UpdateNoteMap: React.FC = () => {
 
     const handleSave = async () => {
         if (title && content && markerPosition) {
+            setLoading(true); // Set loading to true
             const combinedImages = [...(noteData?.imageUrls || []), ...selectedImages];
 
             const data = {
                 title,
-                content: content,
+                content,
                 location: {
                     latitude: markerPosition.latitude,
                     longitude: markerPosition.longitude,
@@ -54,12 +58,15 @@ const UpdateNoteMap: React.FC = () => {
                     await createNote(data);
                     Alert.alert("Note Saved");
                 }
+                navigation.goBack(); // Go back after saving
             } catch (error: unknown) {
                 if (error instanceof Error) {
                     Alert.alert("Error Saving Note", error.message);
                 } else {
                     Alert.alert("Error Saving Note", "An unknown error occurred.");
                 }
+            } finally {
+                setLoading(false); // Set loading to false after the operation
             }
         } else {
             Alert.alert("Error", "Please fill all fields and select a location.");
@@ -106,7 +113,7 @@ const UpdateNoteMap: React.FC = () => {
         if (noteData?.imageUrls) {
             setImageUrls(noteData.imageUrls);
         }
-    }, [removeImageFromNote]);
+    }, [noteData]);
 
     const handleMapPress = (event: any) => {
         const { latitude, longitude } = event.nativeEvent.coordinate;
@@ -174,6 +181,7 @@ const UpdateNoteMap: React.FC = () => {
     const deleteImage = (imageUri: string) => {
         setSelectedImages((prev) => prev.filter((image) => image !== imageUri));
     };
+
     const deleteExistingImage = (imageUri: string) => {
         Alert.alert(
             "Confirm Delete",
@@ -230,7 +238,6 @@ const UpdateNoteMap: React.FC = () => {
             return (
                 <View style={styles.imageContainer}>
                     <Text style={styles.imagesHeader}>Existing Images:</Text>
-
                     <ScrollView horizontal showsHorizontalScrollIndicator={false}>
                         {noteData.imageUrls.map((imageUri, index) => (
                             <View key={index}>
@@ -244,137 +251,111 @@ const UpdateNoteMap: React.FC = () => {
                 </View>
             );
         }
-        return null;
     };
 
     return (
-        <ScrollView contentContainerStyle={{ flexGrow: 1 }}>
+        <ScrollView contentContainerStyle={styles.scrollContainer}>
             <View style={styles.container}>
-                <View style={styles.formContainer}>
-                    <TextInput style={styles.input} placeholder="Enter Title" value={title} onChangeText={setTitle} placeholderTextColor="#888" />
-                    <TextInput
-                        style={[styles.input, styles.contentInput]}
-                        placeholder="Enter content"
-                        value={content}
-                        onChangeText={setContent}
-                        placeholderTextColor="#888"
-                        multiline
-                    />
-                </View>
+                <Text style={styles.headerText}>Update Note</Text>
+                <TextInput style={styles.input} placeholder="Title" value={title} onChangeText={setTitle} />
+                <TextInput style={styles.input} placeholder="Content" multiline numberOfLines={4} value={content} onChangeText={setContent} />
                 <MapView
-                    style={styles.map}
-                    initialRegion={region}
-                    showsUserLocation
-                    showsMyLocationButton
-                    provider={PROVIDER_GOOGLE}
                     ref={mapRef}
-                    onRegionChangeComplete={onRegionChange}
-                    onPress={handleMapPress}
-                    mapPadding={{ top: 10, right: 10, bottom: 10, left: 10 }}
+                    style={styles.map}
+                    provider={PROVIDER_GOOGLE}
                     region={region}
+                    onPress={handleMapPress}
+                    onRegionChangeComplete={onRegionChange}
                 >
                     {markerPosition && (
-                        <Marker coordinate={markerPosition} title="Selected Location">
+                        <Marker coordinate={markerPosition}>
                             <Callout>
-                                <View style={{ padding: 10 }}>
-                                    <Text style={{ fontSize: 24 }}>Selected Location</Text>
-                                </View>
+                                <Text>{markerText}</Text>
                             </Callout>
                         </Marker>
                     )}
                 </MapView>
-
-                {markerPosition && (
-                    <View style={styles.textContainer}>
-                        <Text style={styles.text}>{markerText}</Text>
-                    </View>
-                )}
-
                 <TouchableOpacity style={styles.button} onPress={pickImageOrTakePhoto}>
-                    <Text style={styles.buttonText}>Select Image</Text>
+                    <Text style={styles.buttonText}>Add Images</Text>
                 </TouchableOpacity>
-                <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.imageScroll}>
-                    {renderSelectedImages()}
-                </ScrollView>
                 {renderNoteImages()}
-                {/* <Pressable style={[styles.button, styles.saveButton]} onPress={handleSave}>
-                    <Text style={styles.buttonText}>Save</Text>
-                </Pressable> */}
+                {renderSelectedImages()}
+                {loading ? (
+                    <Text style={styles.loadingText}>Saving...</Text>
+                ) : (
+                    <TouchableOpacity style={styles.button} onPress={handleSave}>
+                        <Text style={styles.buttonText}>Save Note</Text>
+                    </TouchableOpacity>
+                )}
             </View>
         </ScrollView>
     );
 };
 
 const styles = StyleSheet.create({
+    scrollContainer: {
+        flexGrow: 1, // Ensures the ScrollView expands to fit the content
+    },
     container: {
         flex: 1,
+        padding: 16,
+        backgroundColor: "#fff",
     },
-    deleteButton: {
-        position: "absolute",
-        top: 5,
-        right: 5,
-        zIndex: 1,
-        backgroundColor: "red",
-        borderRadius: 20,
-        padding: 5,
-    },
-    formContainer: {
-        padding: 10,
+    headerText: {
+        fontSize: 24,
+        fontWeight: "bold",
+        marginBottom: 16,
     },
     input: {
-        height: 50,
-        borderColor: "#ddd",
         borderWidth: 1,
-        borderRadius: 5,
-        paddingHorizontal: 10,
-        marginBottom: 10,
-        backgroundColor: "white",
+        borderColor: "#ccc",
+        borderRadius: 4,
+        padding: 8,
+        marginBottom: 16,
     },
-    contentInput: {
-        height: 100,
+    map: {
+        width: "100%",
+        height: 250,
+        marginBottom: 16,
     },
     button: {
-        backgroundColor: "#007bff",
-        padding: 15,
-        borderRadius: 5,
-        marginBottom: 10,
+        backgroundColor: "#7B7F5E",
+        padding: 12,
+        borderRadius: 4,
         alignItems: "center",
+        marginBottom: 16,
     },
     buttonText: {
-        color: "white",
-        fontSize: 16,
+        color: "#fff",
+        fontWeight: "bold",
     },
-    saveButton: {
-        backgroundColor: "#28a745",
-    },
-    imageScroll: {
-        marginVertical: 10,
+    loadingText: {
+        textAlign: "center",
+        fontSize: 18,
+        marginVertical: 16,
     },
     imageContainer: {
-        marginRight: 10,
-        position: "relative",
+        marginBottom: 16,
+    },
+    imagesHeader: {
+        fontSize: 18,
+        fontWeight: "bold",
+        marginBottom: 8,
     },
     image: {
         width: 100,
         height: 100,
-        borderRadius: 10,
-        margin: 5,
+        borderRadius: 8,
+        marginRight: 8,
     },
-    imagesHeader: {
-        fontSize: 16,
-        fontWeight: "bold",
-        marginBottom: 5,
-    },
-    map: {
-        width: "100%",
-        height: 300,
-        marginBottom: 10,
-    },
-    textContainer: {
-        padding: 10,
-    },
-    text: {
-        fontSize: 16,
+    deleteButton: {
+        position: "absolute",
+        top: 0,
+        right: 0,
+        zIndex: 1,
+        backgroundColor: "red",
+        borderRadius: 12,
+        padding: 4,
     },
 });
 
