@@ -46,7 +46,7 @@ const Layout = () => {
                 headerTitle: "view",
                 headerRight: () => (
                     <View style={{ flexDirection: "row", alignItems: "center" }}>
-                        <Link href={`/update_item/${id as string}`} asChild>
+                        <Link href={`/note_update/${id as string}`} asChild>
                             <Pressable>
                                 <Icon name="edit" size={24} color="#000" style={{ marginRight: 15 }} />
                             </Pressable>

@@ -48,7 +48,7 @@ const NoteList = () => {
 
     const renderItem = ({ item }: { item: Note }) => (
         <View style={styles.itemContainer}>
-            <TouchableOpacity onPress={() => router.push(`/item/${item.id}`)}>
+            <TouchableOpacity onPress={() => router.push(`/note_view/${item.id}`)}>
                 <Text style={styles.title}>{item.title}</Text>
             </TouchableOpacity>
             <Text style={styles.date}>{formatDate(item.createdAt)}</Text>

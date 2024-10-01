@@ -4,7 +4,8 @@ import MapView, { Marker, Callout, PROVIDER_GOOGLE, Region, LatLng } from "react
 import * as ImagePicker from "expo-image-picker";
 import { Ionicons } from "@expo/vector-icons";
 import { createNote, updateNote, getNoteById, removeImageFromNote } from "../../services/note_service"; // Import updateNote and getNoteById
-import { useLocalSearchParams } from "expo-router"; // Import useLocalSearchParams for id handling
+import { useLocalSearchParams, useNavigation } from "expo-router"; // Import useLocalSearchParams for id handling
+import { getAuth } from "firebase/auth";
 
 interface Note {
     id?: string;
@@ -18,7 +19,7 @@ interface Note {
     imageUrls?: string[]; // Add imageUrls to the Note interface
 }
 
-const AddNotemap: React.FC = () => {
+const UpdateNoteMap: React.FC = () => {
     const { id } = useLocalSearchParams(); // Use id from local search params
     const [markerPosition, setMarkerPosition] = useState<LatLng | null>(null);
     const [markerText, setMarkerText] = useState<string>("");
@@ -27,10 +28,43 @@ const AddNotemap: React.FC = () => {
     const [content, setContent] = useState<string>("");
     const [title, setTitle] = useState<string>("");
     const [selectedImages, setSelectedImages] = useState<string[]>([]);
-    const [selectedImage, setSelectedImage] = useState<string | null>(null);
     const [noteData, setNoteData] = useState<Note | null>(null);
-    const [modalVisible, setModalVisible] = useState(false);
     const [imageUrls, setImageUrls] = useState<string[]>(noteData?.imageUrls || []);
+
+    const handleSave = async () => {
+        if (title && content && markerPosition) {
+            const combinedImages = [...(noteData?.imageUrls || []), ...selectedImages];
+
+            const data = {
+                title,
+                content: content,
+                location: {
+                    latitude: markerPosition.latitude,
+                    longitude: markerPosition.longitude,
+                },
+                imageUrls: combinedImages.length > 0 ? combinedImages : null,
+                createdAt: new Date().toISOString(),
+                authorId: getAuth().currentUser?.uid,
+            };
+            try {
+                if (id) {
+                    await updateNote(id as string, data);
+                    Alert.alert("Note Updated");
+                } else {
+                    await createNote(data);
+                    Alert.alert("Note Saved");
+                }
+            } catch (error: unknown) {
+                if (error instanceof Error) {
+                    Alert.alert("Error Saving Note", error.message);
+                } else {
+                    Alert.alert("Error Saving Note", "An unknown error occurred.");
+                }
+            }
+        } else {
+            Alert.alert("Error", "Please fill all fields and select a location.");
+        }
+    };
 
     useEffect(() => {
         const fetchNoteData = async () => {
@@ -213,40 +247,6 @@ const AddNotemap: React.FC = () => {
         return null;
     };
 
-    const handleSave = async () => {
-        if (title && content && markerPosition) {
-            const data = {
-                title,
-                content: content,
-                location: {
-                    latitude: markerPosition.latitude,
-                    longitude: markerPosition.longitude,
-                },
-                imageUrls: selectedImages.length > 0 ? selectedImages : null,
-                createdAt: new Date().toISOString(),
-                authorId: "123412412",
-            };
-
-            try {
-                if (id) {
-                    await updateNote(id as string, data);
-                    Alert.alert("Note Updated");
-                } else {
-                    await createNote(data); // Create new note
-                    Alert.alert("Note Saved");
-                }
-            } catch (error: unknown) {
-                if (error instanceof Error) {
-                    Alert.alert("Error Saving Note", error.message);
-                } else {
-                    Alert.alert("Error Saving Note", "An unknown error occurred.");
-                }
-            }
-        } else {
-            Alert.alert("Error", "Please fill all fields and select a location.");
-        }
-    };
-
     return (
         <ScrollView contentContainerStyle={{ flexGrow: 1 }}>
             <View style={styles.container}>
@@ -297,9 +297,9 @@ const AddNotemap: React.FC = () => {
                     {renderSelectedImages()}
                 </ScrollView>
                 {renderNoteImages()}
-                <Pressable style={[styles.button, styles.saveButton]} onPress={handleSave}>
+                {/* <Pressable style={[styles.button, styles.saveButton]} onPress={handleSave}>
                     <Text style={styles.buttonText}>Save</Text>
-                </Pressable>
+                </Pressable> */}
             </View>
         </ScrollView>
     );
@@ -378,4 +378,4 @@ const styles = StyleSheet.create({
     },
 });
 
-export default AddNotemap;
+export default UpdateNoteMap;

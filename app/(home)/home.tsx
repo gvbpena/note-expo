@@ -10,7 +10,7 @@ const Home = () => {
         <View style={styles.container}>
             <Text style={styles.welcomeText}>Welcome to Notemap</Text>
             <NoteList />
-            <Link href="/note/" asChild>
+            <Link href="/note_add/" asChild>
                 <Pressable style={styles.floatingButton}>
                     <Icon name="add" size={28} color="#fff" />
                     <Text style={styles.floatingButtonText}>Add Notes</Text>
