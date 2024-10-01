@@ -1,8 +1,8 @@
-import React, { useEffect, useState } from "react";
-import { Text, View, StyleSheet, ScrollView, Image } from "react-native";
+import React, { useEffect, useRef, useState } from "react";
+import { Text, View, StyleSheet, ScrollView, Image, Modal, TouchableOpacity } from "react-native";
 import { useLocalSearchParams } from "expo-router";
-import { getSpecificNoteDataById } from "../../services/note_service";
-import MapView, { Marker } from "react-native-maps"; // Import MapView and Marker
+import { getNoteById } from "../../services/note_service";
+import MapView, { Marker, PROVIDER_GOOGLE } from "react-native-maps";
 
 interface Note {
     id?: string;
@@ -20,11 +20,13 @@ interface Note {
 const NoteDetails: React.FC = () => {
     const { id } = useLocalSearchParams();
     const [noteData, setNoteData] = useState<Note | null>(null);
+    const [modalVisible, setModalVisible] = useState(false);
+    const [selectedImage, setSelectedImage] = useState<string | null>(null);
 
     useEffect(() => {
         const fetchNoteData = async () => {
             try {
-                const response = await getSpecificNoteDataById(id as string);
+                const response = await getNoteById(id as string);
                 setNoteData(response);
             } catch (error) {
                 console.error("Failed to fetch note data:", error);
@@ -41,6 +43,16 @@ const NoteDetails: React.FC = () => {
             </View>
         );
     }
+
+    const openModal = (imageUrl: string) => {
+        setSelectedImage(imageUrl);
+        setModalVisible(true);
+    };
+
+    const closeModal = () => {
+        setModalVisible(false);
+        setSelectedImage(null);
+    };
 
     return (
         <ScrollView contentContainerStyle={styles.container}>
@@ -66,6 +78,7 @@ const NoteDetails: React.FC = () => {
                         latitudeDelta: 0.01,
                         longitudeDelta: 0.01,
                     }}
+                    provider={PROVIDER_GOOGLE}
                 >
                     <Marker
                         coordinate={{
@@ -81,10 +94,24 @@ const NoteDetails: React.FC = () => {
             {noteData.imageUrls && noteData.imageUrls.length > 0 && (
                 <View style={styles.imageContainer}>
                     <Text style={styles.imagesHeader}>Images:</Text>
-                    {noteData.imageUrls.map((imageUri, index) => (
-                        <Image key={index} source={{ uri: imageUri }} style={styles.image} />
-                    ))}
+                    <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                        {noteData.imageUrls.map((imageUri, index) => (
+                            <TouchableOpacity key={index} onPress={() => openModal(imageUri)}>
+                                <Image source={{ uri: imageUri }} style={styles.image} />
+                            </TouchableOpacity>
+                        ))}
+                    </ScrollView>
                 </View>
+            )}
+            {selectedImage && (
+                <Modal visible={modalVisible} transparent={true} animationType="fade" onRequestClose={closeModal}>
+                    <View style={styles.modalContainer}>
+                        <TouchableOpacity style={styles.modalClose} onPress={closeModal}>
+                            <Text style={styles.closeText}>X</Text>
+                        </TouchableOpacity>
+                        <Image source={{ uri: selectedImage }} style={styles.modalImage} resizeMode="contain" />
+                    </View>
+                </Modal>
             )}
         </ScrollView>
     );
@@ -155,10 +182,30 @@ const styles = StyleSheet.create({
         marginBottom: 10,
     },
     image: {
-        width: "100%",
-        height: 200,
+        width: 100, // Adjust width as needed
+        height: 100, // Adjust height as needed
         borderRadius: 10,
-        marginBottom: 10,
+        marginRight: 10,
+    },
+    modalContainer: {
+        flex: 1,
+        justifyContent: "center",
+        alignItems: "center",
+        backgroundColor: "rgba(0, 0, 0, 0.8)",
+    },
+    modalClose: {
+        position: "absolute",
+        top: 40,
+        right: 30,
+        zIndex: 1,
+    },
+    closeText: {
+        fontSize: 24,
+        color: "#fff",
+    },
+    modalImage: {
+        width: "100%",
+        height: "100%",
     },
 });
 

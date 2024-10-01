@@ -1,10 +1,9 @@
-import React, { useState, useRef } from "react";
-import { Text, View, StyleSheet, TextInput, Platform, ScrollView, TouchableOpacity, Alert, Pressable, Image, ActivityIndicator } from "react-native";
+import React, { useState, useRef, useEffect } from "react";
+import { Text, View, StyleSheet, TextInput, Platform, ScrollView, TouchableOpacity, Alert, Pressable, Image } from "react-native";
 import MapView, { Marker, Callout, PROVIDER_GOOGLE, Region, LatLng } from "react-native-maps";
 import * as ImagePicker from "expo-image-picker";
-import { uploadImages } from "../services/image_service"; // Import the uploadImages function
-import { Ionicons } from "@expo/vector-icons"; // Import Ionicons for the delete icon
-import { createNote } from "../services/note_service";
+import { Ionicons } from "@expo/vector-icons";
+import { createNote, updateNote, getNoteById } from "../../services/note_service"; // Import updateNote and getNoteById
 
 const INITIAL_REGION = {
     latitude: 37.78825,
@@ -13,7 +12,22 @@ const INITIAL_REGION = {
     longitudeDelta: 0.0421,
 };
 
-const AddNotemap = () => {
+interface AddNoteMapProps {
+    noteId?: string; // Optional ID for updates
+}
+
+interface Note {
+    id?: string;
+    title?: string;
+    content?: string;
+    location?: {
+        latitude: number;
+        longitude: number;
+    };
+    images?: string[];
+}
+
+const AddNotemap: React.FC<AddNoteMapProps> = ({ noteId }) => {
     const [markerPosition, setMarkerPosition] = useState<LatLng | null>(null);
     const [markerText, setMarkerText] = useState<string>("");
     const mapRef = useRef<MapView>(null);
@@ -21,6 +35,42 @@ const AddNotemap = () => {
     const [description, setDescription] = useState<string>("");
     const [title, setTitle] = useState<string>("");
     const [selectedImages, setSelectedImages] = useState<string[]>([]);
+    const [noteData, setNoteData] = useState<Note | null>(null);
+
+    useEffect(() => {
+        const fetchNoteData = async () => {
+            if (noteId) {
+                try {
+                    const response = await getNoteById(noteId);
+                    console.log(response); // Log the response to verify its structure
+                    const note: Note = response; // Ensure it matches the Note type
+                    setNoteData(note);
+                } catch (error) {
+                    console.error("Failed to fetch note data:", error);
+                }
+            }
+        };
+
+        fetchNoteData();
+    }, [noteId]);
+
+    if (noteData) {
+        console.log(noteData.title); // This should work without errors
+    }
+    if (!noteData) {
+        return <Text>Loading...</Text>; // Handle loading state
+    }
+
+    // const loadNoteData = async (id: string) => {
+    //     const noteData = await getNoteById(id);
+    //     if (noteData) {
+    //         setTitle(noteData.title);
+    //         setDescription(noteData.content);
+    //         setMarkerPosition(noteData.location);
+    //         setSelectedImages(noteData.images);
+    //         setMarkerText(`Location at Lat: ${noteData.location?.latitude.toFixed(4)}, Lon: ${noteData.location?.longitude.toFixed(4)}`);
+    //     }
+    // };
 
     const handleMapPress = (event: any) => {
         const { latitude, longitude } = event.nativeEvent.coordinate;
@@ -31,6 +81,7 @@ const AddNotemap = () => {
     const onRegionChange = (newRegion: Region) => {
         setRegion(newRegion);
     };
+
     const launchCamera = async () => {
         const cameraPermission = await ImagePicker.requestCameraPermissionsAsync();
         if (cameraPermission.status !== "granted") {
@@ -48,7 +99,6 @@ const AddNotemap = () => {
         }
     };
 
-    // Function to launch image library
     const launchImageLibrary = async () => {
         const result = await ImagePicker.launchImageLibraryAsync({
             mediaTypes: ImagePicker.MediaTypeOptions.Images,
@@ -63,14 +113,12 @@ const AddNotemap = () => {
     };
 
     const pickImageOrTakePhoto = async () => {
-        // Request permission to access media library
         const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
         if (permissionResult.status !== "granted") {
             Alert.alert("Permission required", "Permission to access media library is required!");
             return;
         }
 
-        // Show options for the user to choose from
         Alert.alert("Choose an action", "Select an action:", [
             {
                 text: "Take Photo",
@@ -117,13 +165,15 @@ const AddNotemap = () => {
             };
 
             try {
-                const savedNote = await createNote(data);
-                Alert.alert("Note Saved");
-                // console.log("Saved Note:", savedNote);
+                if (noteId) {
+                    await updateNote(noteId, data); // Update note if ID is provided
+                    Alert.alert("Note Updated");
+                } else {
+                    await createNote(data); // Create new note
+                    Alert.alert("Note Saved");
+                }
             } catch (error: unknown) {
-                // Specify error as unknown
                 if (error instanceof Error) {
-                    // Check if it is an instance of Error
                     Alert.alert("Error Saving Note", error.message);
                 } else {
                     Alert.alert("Error Saving Note", "An unknown error occurred.");
@@ -239,53 +289,48 @@ const styles = StyleSheet.create({
         borderRadius: 10,
         borderColor: "#e0e0e0",
         borderWidth: 1,
-        marginBottom: 15,
-        fontSize: 16,
-        color: "#333",
+        marginBottom: 10,
     },
     descriptionInput: {
         height: 100,
-        verticalAlign: "top",
     },
-    textContainer: {
-        padding: 10,
-        backgroundColor: "white",
-        borderTopWidth: 1,
-        borderTopColor: "#ccc",
-        alignItems: "center",
+    button: {
+        backgroundColor: "#007bff",
+        paddingVertical: 12,
+        borderRadius: 10,
+        marginVertical: 10,
     },
-    text: {
+    saveButton: {
+        backgroundColor: "#28a745",
+    },
+    buttonText: {
+        color: "white",
+        textAlign: "center",
         fontSize: 16,
-        color: "#333",
+    },
+    map: {
+        width: "100%",
+        height: 300,
     },
     noMapContainer: {
-        flex: 1,
         justifyContent: "center",
         alignItems: "center",
+        height: 300,
     },
     noMapText: {
         fontSize: 18,
-        color: "gray",
+        color: "#888",
     },
-    map: {
-        height: 400,
-        marginBottom: 10,
-        marginHorizontal: 20,
+    textContainer: {
+        marginTop: 10,
+        padding: 10,
+        backgroundColor: "rgba(255, 255, 255, 0.8)",
+        borderRadius: 8,
+        elevation: 3,
     },
-    button: {
-        backgroundColor: "#7B7F5E",
-        paddingVertical: 12,
-        paddingHorizontal: 20,
-        borderRadius: 10,
-        alignItems: "center",
-        margin: 20,
-    },
-    saveButton: {
-        backgroundColor: "#5E7B7F", // Save button with a slight variation in color
-    },
-    buttonText: {
+    text: {
         fontSize: 16,
-        color: "#fff",
+        color: "#000",
     },
 });
 

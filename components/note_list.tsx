@@ -6,12 +6,13 @@ import { useRouter } from "expo-router"; // Using expo-router for navigation
 interface Note {
     id: string;
     title: string;
-    createdAt: any; // Adjust this type as necessary based on your data structure
+    createdAt: string; // Assuming createdAt is a string, change as necessary
 }
 
 const NoteList = () => {
     const [notes, setNotes] = useState<Note[]>([]);
     const [loading, setLoading] = useState<boolean>(true);
+    const [error, setError] = useState<string | null>(null); // State for error handling
     const router = useRouter(); // For navigation
 
     useEffect(() => {
@@ -20,6 +21,7 @@ const NoteList = () => {
                 const notesData = await getAllNotes();
                 setNotes(notesData);
             } catch (error) {
+                setError("Failed to fetch notes. Please try again."); // Update error state
                 console.error("Failed to fetch notes: ", error);
             } finally {
                 setLoading(false);
@@ -29,12 +31,22 @@ const NoteList = () => {
         fetchNotes();
     }, []);
 
+    const formatDate = (dateString: string) => {
+        const date = new Date(dateString);
+        const options: Intl.DateTimeFormatOptions = {
+            year: "numeric",
+            month: "short",
+            day: "numeric",
+        };
+        return date.toLocaleDateString(undefined, options); // Format the date
+    };
+
     const renderItem = ({ item }: { item: Note }) => (
         <View style={styles.itemContainer}>
             <TouchableOpacity onPress={() => router.push(`/item/${item.id}`)}>
                 <Text style={styles.title}>{item.title}</Text>
             </TouchableOpacity>
-            <Text style={styles.date}>{item.createdAt}</Text>
+            <Text style={styles.date}>{formatDate(item.createdAt)}</Text>
         </View>
     );
 
@@ -42,6 +54,14 @@ const NoteList = () => {
         return (
             <View style={styles.loadingContainer}>
                 <ActivityIndicator size="large" color="#0000ff" />
+            </View>
+        );
+    }
+
+    if (error) {
+        return (
+            <View style={styles.loadingContainer}>
+                <Text style={styles.errorMessage}>{error}</Text>
             </View>
         );
     }
@@ -90,6 +110,12 @@ const styles = StyleSheet.create({
         textAlign: "center",
         fontSize: 16,
         color: "#aaa",
+        marginTop: 20,
+    },
+    errorMessage: {
+        textAlign: "center",
+        fontSize: 16,
+        color: "red",
         marginTop: 20,
     },
 });

@@ -1,9 +1,7 @@
-// app/login.js
 import React, { useState } from "react";
 import { View, TextInput, Button, Text, StyleSheet, Pressable, ActivityIndicator } from "react-native";
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { auth } from "../services/firebase";
-import { loginUser } from "../services/auth_service";
 import { useRouter } from "expo-router";
 
 export default function LoginScreen() {
@@ -28,6 +26,7 @@ export default function LoginScreen() {
 
     return (
         <View style={styles.container}>
+            <Text style={styles.title}>Notemap-Expo</Text>
             <TextInput
                 placeholder="Email"
                 value={email}
@@ -39,7 +38,9 @@ export default function LoginScreen() {
             />
             <TextInput placeholder="Password" value={password} onChangeText={setPassword} secureTextEntry style={styles.input} placeholderTextColor="#aaa" />
             {loading ? (
-                <ActivityIndicator size="large" color="#000" style={styles.loader} />
+                <Pressable style={styles.button} disabled>
+                    <ActivityIndicator size="large" color="#fff" />
+                </Pressable>
             ) : (
                 <Pressable style={styles.button} onPress={handleLogin}>
                     <Text style={styles.buttonText}>Login</Text>
@@ -59,6 +60,13 @@ const styles = StyleSheet.create({
         justifyContent: "center",
         paddingHorizontal: 20,
         backgroundColor: "white",
+    },
+    title: {
+        fontSize: 32,
+        fontWeight: "bold",
+        color: "black",
+        textAlign: "center",
+        marginBottom: 30,
     },
     input: {
         borderWidth: 1,
@@ -85,9 +93,6 @@ const styles = StyleSheet.create({
         marginTop: 10,
         textAlign: "center",
         textDecorationLine: "underline",
-    },
-    loader: {
-        marginBottom: 10,
     },
     error: {
         color: "red",

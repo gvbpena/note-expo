@@ -31,7 +31,7 @@ export const updateNote = async (id: string, data: any) => {
 };
 
 // Get a specific note by ID
-export const getSpecificNoteDataById = async (id: string) => {
+export const getNoteById = async (id: string) => {
     try {
         const noteRef = doc(firestore, "notes", id); // Get a reference to the note
         const docSnap = await getDoc(noteRef); // Get the document snapshot

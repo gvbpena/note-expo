@@ -1,6 +1,6 @@
 import { initializeApp } from "firebase/app";
 import { getAuth, initializeAuth, getReactNativePersistence } from "firebase/auth";
-import { getFirestore } from "firebase/firestore";
+import { initializeFirestore } from "firebase/firestore";
 import { getStorage } from "firebase/storage";
 import ReactNativeAsyncStorage from "@react-native-async-storage/async-storage";
 import { Platform } from "react-native";
@@ -17,17 +17,24 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 
-let auth;
-if (Platform.OS === "android") {
-    auth = initializeAuth(app, {
-        persistence: getReactNativePersistence(ReactNativeAsyncStorage),
-    });
-}
-if (Platform.OS === "web") {
-    auth = getAuth(app);
-}
+// let auth;
+// if (Platform.OS === "android") {
+//     auth = initializeAuth(app, {
+//         persistence: getReactNativePersistence(ReactNativeAsyncStorage),
+//     });
+// }
+// if (Platform.OS === "web") {
+//     auth = getAuth(app);
+// }
+const auth = initializeAuth(app, {
+    persistence: getReactNativePersistence(ReactNativeAsyncStorage),
+});
 
-const firestore = getFirestore(app);
+const firestore = initializeFirestore(app, {
+    experimentalForceLongPolling: true,
+});
+
+// const firestore = getFirestore(app);
 const storage = getStorage(app);
 
 export { auth, firestore, storage, app };

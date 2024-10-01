@@ -16,6 +16,17 @@ const INITIAL_REGION = {
     longitudeDelta: 0.0421,
 };
 
+export interface Note {
+    id: string;
+    title: string;
+    description: string;
+    location: {
+        latitude: number;
+        longitude: number;
+    };
+    imageUrls: string[];
+}
+
 const AddNotemap = () => {
     const navigation = useNavigation(); // Get the navigation prop
     const [markerPosition, setMarkerPosition] = useState<LatLng | null>(null);
@@ -108,20 +119,20 @@ const AddNotemap = () => {
             setLoading(true); // Set loading to true
             const data = {
                 title,
-                content: description,
+                description, // Use description instead of content
                 location: {
                     latitude: markerPosition.latitude,
                     longitude: markerPosition.longitude,
                 },
                 imageUrls: selectedImages.length > 0 ? selectedImages : null,
                 createdAt: new Date().toISOString(),
-                authorId: getAuth().currentUser?.uid || null,
+                authorId: getAuth().currentUser?.uid,
             };
 
             try {
                 await createNote(data);
                 Alert.alert("Note Saved");
-                navigation.goBack(); // Navigate back after saving
+                navigation.goBack();
             } catch (error: unknown) {
                 if (error instanceof Error) {
                     Alert.alert("Error Saving Note", error.message);
@@ -129,7 +140,7 @@ const AddNotemap = () => {
                     Alert.alert("Error Saving Note", "An unknown error occurred.");
                 }
             } finally {
-                setLoading(false); // Set loading to false when done
+                setLoading(false);
             }
         } else {
             Alert.alert("Error", "Please fill all fields and select a location.");
