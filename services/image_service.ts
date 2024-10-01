@@ -7,26 +7,22 @@ import { storage } from "./firebase";
 const uploadImages = async (imageUris: string[]): Promise<string[]> => {
     const imageUrls: string[] = [];
     const promises = imageUris.map(async (uri) => {
-        // Fetch the image as a blob from the URI
         const response = await fetch(uri);
         const blob = await response.blob();
 
-        // Create a storage reference for the image
-        const imageRef = ref(storage, `images/${new Date().getTime()}_${uri.split("/").pop()}`); // Ensure unique names
-        await uploadBytes(imageRef, blob); // Upload the image blob
-        const downloadURL = await getDownloadURL(imageRef); // Get the download URL
-        imageUrls.push(downloadURL); // Add the URL to the array
+        const imageRef = ref(storage, `images/${new Date().getTime()}_${uri.split("/").pop()}`);
+        await uploadBytes(imageRef, blob);
+        const downloadURL = await getDownloadURL(imageRef);
+        imageUrls.push(downloadURL);
     });
 
-    await Promise.all(promises); // Wait for all uploads to complete
-    return imageUrls; // Return the array of download URLs
+    await Promise.all(promises);
+    return imageUrls;
 };
 
-// Function to delete an image from Firebase Storage
 const deleteImage = async (imagePath: string): Promise<void> => {
-    const imageRef = ref(storage, imagePath); // Create a storage reference for the image
-    await deleteObject(imageRef); // Delete the image
+    const imageRef = ref(storage, imagePath);
+    await deleteObject(imageRef);
 };
 
-// Export the functions
 export { uploadImages, deleteImage };

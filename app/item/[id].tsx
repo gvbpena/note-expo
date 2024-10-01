@@ -7,7 +7,7 @@ import MapView, { Marker, PROVIDER_GOOGLE } from "react-native-maps";
 interface Note {
     id?: string;
     title?: string;
-    description?: string;
+    content?: string;
     location?: {
         latitude: number;
         longitude: number;
@@ -59,8 +59,8 @@ const NoteDetails: React.FC = () => {
             <Text style={styles.title}>{noteData.title}</Text>
             <Text style={styles.author}>Author: {noteData.authorId}</Text>
             <Text style={styles.createdAt}>Created At: {new Date(noteData.createdAt!).toLocaleString()}</Text>
-            <Text style={styles.descriptionHeader}>Description:</Text>
-            <Text style={styles.description}>{noteData.description}</Text>
+            <Text style={styles.contentHeader}>content:</Text>
+            <Text style={styles.content}>{noteData.content}</Text>
 
             <Text style={styles.locationHeader}>Location:</Text>
             {noteData.location && (
@@ -86,7 +86,7 @@ const NoteDetails: React.FC = () => {
                             longitude: noteData.location.longitude,
                         }}
                         title="Note Location"
-                        description={noteData.description}
+                        description={noteData.content}
                     />
                 </MapView>
             )}
@@ -147,12 +147,12 @@ const styles = StyleSheet.create({
         marginBottom: 15,
         color: "#777",
     },
-    descriptionHeader: {
+    contentHeader: {
         fontSize: 18,
         fontWeight: "bold",
         marginBottom: 5,
     },
-    description: {
+    content: {
         fontSize: 16,
         marginBottom: 20,
         color: "#333",

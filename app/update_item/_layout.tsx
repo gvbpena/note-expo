@@ -11,6 +11,7 @@ const Layout = () => {
                 headerStyle: { backgroundColor: "#fff" },
                 headerTitleAlign: "center",
                 headerTitle: "Edit",
+                headerShown: false,
             }}
         />
     );

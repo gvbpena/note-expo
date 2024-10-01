@@ -4,7 +4,7 @@ import { collection, doc, setDoc, updateDoc, getDoc, getDocs, deleteDoc } from "
 export interface Note {
     id?: string;
     title?: string;
-    description?: string;
+    content?: string;
     location?: {
         latitude: number;
         longitude: number;
@@ -13,12 +13,12 @@ export interface Note {
     createdAt?: string;
     authorId?: string;
 }
-// Create a new note
+
 export const createNote = async (data: any) => {
     try {
-        const newNoteRef = doc(collection(firestore, "notes")); // Create a new document reference
-        await setDoc(newNoteRef, data); // Set the data for the new document
-        return newNoteRef.id; // Return the ID of the newly created note
+        const newNoteRef = doc(collection(firestore, "notes"));
+        await setDoc(newNoteRef, data);
+        return newNoteRef.id;
     } catch (error: unknown) {
         if (error instanceof Error) {
             throw new Error("Failed to create note: " + error.message);
@@ -31,8 +31,8 @@ export const createNote = async (data: any) => {
 // Update an existing note
 export const updateNote = async (id: string, data: any) => {
     try {
-        const noteRef = doc(firestore, "notes", id); // Get a reference to the note
-        await updateDoc(noteRef, data); // Update the note with new data
+        const noteRef = doc(firestore, "notes", id);
+        await updateDoc(noteRef, data);
     } catch (error: unknown) {
         if (error instanceof Error) {
             throw new Error("Failed to update note: " + error.message);
@@ -42,10 +42,9 @@ export const updateNote = async (id: string, data: any) => {
     }
 };
 
-// Get a specific note by ID
 export const getNoteById = async (id: string) => {
     try {
-        const noteRef = doc(firestore, "notes", id); // Get a reference to the note
+        const noteRef = doc(firestore, "notes", id);
         const docSnap = await getDoc(noteRef); // Get the document snapshot
         if (docSnap.exists()) {
             return { id: docSnap.id, ...docSnap.data() }; // Include the document ID in the returned object
@@ -89,13 +88,34 @@ export const getAllNotes = async () => {
 // Delete a note by ID
 export const deleteNote = async (id: string) => {
     try {
-        const noteRef = doc(firestore, "notes", id); // Get a reference to the note
-        await deleteDoc(noteRef); // Delete the note
+        const noteRef = doc(firestore, "notes", id);
+        await deleteDoc(noteRef);
     } catch (error: unknown) {
         if (error instanceof Error) {
             throw new Error("Failed to delete note: " + error.message);
         } else {
             throw new Error("Failed to delete note: An unknown error occurred.");
+        }
+    }
+};
+
+export const removeImageFromNote = async (noteId: string, imageUrl: string) => {
+    try {
+        const noteRef = doc(firestore, "notes", noteId);
+
+        const noteSnap = await getDoc(noteRef);
+        if (!noteSnap.exists()) {
+            throw new Error("No note found with the given ID.");
+        }
+        const noteData = noteSnap.data();
+        const updatedImageUrls = noteData.imageUrls?.filter((url: string) => url !== imageUrl) || [];
+
+        await updateDoc(noteRef, { imageUrls: updatedImageUrls });
+    } catch (error: unknown) {
+        if (error instanceof Error) {
+            throw new Error("Failed to remove image from note: " + error.message);
+        } else {
+            throw new Error("Failed to remove image from note: An unknown error occurred.");
         }
     }
 };

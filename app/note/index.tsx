@@ -19,7 +19,7 @@ const INITIAL_REGION = {
 export interface Note {
     id: string;
     title: string;
-    description: string;
+    content: string;
     location: {
         latitude: number;
         longitude: number;
@@ -33,7 +33,7 @@ const AddNotemap = () => {
     const [markerText, setMarkerText] = useState<string>("");
     const mapRef = useRef<MapView>(null);
     const [region, setRegion] = useState<Region>(INITIAL_REGION);
-    const [description, setDescription] = useState<string>("");
+    const [content, setcontent] = useState<string>("");
     const [title, setTitle] = useState<string>("");
     const [selectedImages, setSelectedImages] = useState<string[]>([]);
     const [loading, setLoading] = useState<boolean>(false); // Loading state
@@ -115,11 +115,11 @@ const AddNotemap = () => {
     };
 
     const handleSave = async () => {
-        if (title && description && markerPosition) {
+        if (title && content && markerPosition) {
             setLoading(true); // Set loading to true
             const data = {
                 title,
-                description, // Use description instead of content
+                content, // Use content instead of content
                 location: {
                     latitude: markerPosition.latitude,
                     longitude: markerPosition.longitude,
@@ -153,10 +153,10 @@ const AddNotemap = () => {
                 <View style={styles.formContainer}>
                     <TextInput style={styles.input} placeholder="Enter Title" value={title} onChangeText={setTitle} placeholderTextColor="#888" />
                     <TextInput
-                        style={[styles.input, styles.descriptionInput]}
-                        placeholder="Enter Description"
-                        value={description}
-                        onChangeText={setDescription}
+                        style={[styles.input, styles.contentInput]}
+                        placeholder="Enter content"
+                        value={content}
+                        onChangeText={setcontent}
                         placeholderTextColor="#888"
                         multiline
                     />
@@ -260,7 +260,7 @@ const styles = StyleSheet.create({
         fontSize: 16,
         color: "#333",
     },
-    descriptionInput: {
+    contentInput: {
         // Add this style
         height: 100, // Adjust height as needed
         textAlignVertical: "top", // Ensures text starts at the top of the input

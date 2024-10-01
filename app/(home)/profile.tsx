@@ -45,7 +45,7 @@ const ProfileSettings = () => {
                 <Image source={{ uri: "https://via.placeholder.com/100" }} style={styles.profilePicture} />
                 <View style={styles.profileText}>
                     <Text style={styles.profileName}>{userProfile?.name || "Loading..."}</Text>
-                    <Text style={styles.profileDescription}>{userProfile?.email || "Loading..."}</Text>
+                    <Text style={styles.profilecontent}>{userProfile?.email || "Loading..."}</Text>
                 </View>
             </View>
 
@@ -117,7 +117,7 @@ const styles = StyleSheet.create({
         fontWeight: "600",
         color: "#333",
     },
-    profileDescription: {
+    profilecontent: {
         fontSize: 14,
         color: "#666",
         marginTop: 4,
