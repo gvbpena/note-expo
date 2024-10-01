@@ -1,17 +1,10 @@
 import React, { useState, useRef, useEffect } from "react";
-import { Text, View, StyleSheet, TextInput, Platform, ScrollView, TouchableOpacity, Alert, Pressable, Image } from "react-native";
+import { Text, View, StyleSheet, TextInput, Alert, ScrollView, TouchableOpacity, Pressable, Image } from "react-native";
 import MapView, { Marker, Callout, PROVIDER_GOOGLE, Region, LatLng } from "react-native-maps";
 import * as ImagePicker from "expo-image-picker";
 import { Ionicons } from "@expo/vector-icons";
-import { createNote, updateNote, getNoteById } from "../../services/note_service"; // Import updateNote and getNoteById
+import { createNote, updateNote, getNoteById, removeImageFromNote } from "../../services/note_service"; // Import updateNote and getNoteById
 import { useLocalSearchParams } from "expo-router"; // Import useLocalSearchParams for id handling
-
-const INITIAL_REGION = {
-    latitude: 37.78825,
-    longitude: -122.4324,
-    latitudeDelta: 0.0922,
-    longitudeDelta: 0.0421,
-};
 
 interface Note {
     id?: string;
@@ -22,6 +15,7 @@ interface Note {
         longitude: number;
     };
     images?: string[];
+    imageUrls?: string[]; // Add imageUrls to the Note interface
 }
 
 const AddNotemap: React.FC = () => {
@@ -29,35 +23,56 @@ const AddNotemap: React.FC = () => {
     const [markerPosition, setMarkerPosition] = useState<LatLng | null>(null);
     const [markerText, setMarkerText] = useState<string>("");
     const mapRef = useRef<MapView>(null);
-    const [region, setRegion] = useState<Region>(INITIAL_REGION);
-    const [description, setDescription] = useState<string>("");
+    const [region, setRegion] = useState<Region>();
+    const [content, setContent] = useState<string>("");
     const [title, setTitle] = useState<string>("");
     const [selectedImages, setSelectedImages] = useState<string[]>([]);
+    const [selectedImage, setSelectedImage] = useState<string | null>(null);
     const [noteData, setNoteData] = useState<Note | null>(null);
+    const [modalVisible, setModalVisible] = useState(false);
+    const [imageUrls, setImageUrls] = useState<string[]>(noteData?.imageUrls || []);
 
     useEffect(() => {
         const fetchNoteData = async () => {
             if (id) {
                 try {
                     const response = await getNoteById(id as string);
-                    console.log(response); // Log the response to verify its structure
-                    const note: Note = response; // Ensure it matches the Note type
+                    const note: Note = response;
+
                     setNoteData(note);
+
+                    if (note.location) {
+                        const { latitude, longitude } = note.location;
+                        setMarkerPosition({ latitude, longitude });
+                        setRegion({
+                            latitude,
+                            longitude,
+                            latitudeDelta: 0.0922,
+                            longitudeDelta: 0.0421,
+                        });
+                    }
+
+                    setTitle(note.title || ""); // Populate title
+                    setContent(note.content || ""); // Populate content
+                    setSelectedImages(note.images || []); // Populate images
                 } catch (error) {
                     console.error("Failed to fetch note data:", error);
                 }
             }
         };
 
-        fetchNoteData();
+        // Fetch data only when 'id' changes
+        if (id) {
+            fetchNoteData();
+        }
     }, [id]);
 
-    if (noteData) {
-        console.log(noteData.title); // This should work without errors
-    }
-    if (!noteData) {
-        return <Text>Loading...</Text>; // Handle loading state
-    }
+    useEffect(() => {
+        // Update imageUrls only when noteData changes
+        if (noteData?.imageUrls) {
+            setImageUrls(noteData.imageUrls);
+        }
+    }, [removeImageFromNote]);
 
     const handleMapPress = (event: any) => {
         const { latitude, longitude } = event.nativeEvent.coordinate;
@@ -125,23 +140,84 @@ const AddNotemap: React.FC = () => {
     const deleteImage = (imageUri: string) => {
         setSelectedImages((prev) => prev.filter((image) => image !== imageUri));
     };
+    const deleteExistingImage = (imageUri: string) => {
+        Alert.alert(
+            "Confirm Delete",
+            "Are you sure you want to delete this image?",
+            [
+                {
+                    text: "Delete",
+                    onPress: async () => {
+                        try {
+                            await removeImageFromNote(id as string, imageUri);
+                            if (noteData?.imageUrls) {
+                                const updatedImageUrls = noteData.imageUrls.filter((uri) => uri !== imageUri);
+                                setNoteData((prevNoteData) => (prevNoteData ? { ...prevNoteData, imageUrls: updatedImageUrls } : prevNoteData));
+                            }
+                        } catch (error) {
+                            if (error instanceof Error) {
+                                Alert.alert("Error", error.message);
+                            } else {
+                                Alert.alert("Error", "An unknown error occurred.");
+                            }
+                        }
+                    },
+                    style: "destructive",
+                },
+                {
+                    text: "Cancel",
+                    style: "cancel",
+                },
+            ],
+            { cancelable: false }
+        );
+    };
 
     const renderSelectedImages = () => {
-        return selectedImages.map((image, index) => (
-            <View key={index} style={styles.imageContainer}>
-                <Pressable onPress={() => deleteImage(image)} style={styles.deleteButton}>
-                    <Ionicons name="trash-bin" size={20} color="white" />
-                </Pressable>
-                <Image source={{ uri: image }} style={styles.image} />
+        return (
+            <View style={styles.imageContainer}>
+                <Text style={styles.imagesHeader}>Selected Images:</Text>
+                <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                    {selectedImages.map((image, index) => (
+                        <View key={index}>
+                            <Pressable onPress={() => deleteImage(image)} style={styles.deleteButton}>
+                                <Ionicons name="trash-bin" size={20} color="white" />
+                            </Pressable>
+                            <Image source={{ uri: image }} style={styles.image} />
+                        </View>
+                    ))}
+                </ScrollView>
             </View>
-        ));
+        );
+    };
+
+    const renderNoteImages = () => {
+        if (noteData?.imageUrls && noteData.imageUrls.length > 0) {
+            return (
+                <View style={styles.imageContainer}>
+                    <Text style={styles.imagesHeader}>Existing Images:</Text>
+
+                    <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                        {noteData.imageUrls.map((imageUri, index) => (
+                            <View key={index}>
+                                <Pressable onPress={() => deleteExistingImage(imageUri)} style={styles.deleteButton}>
+                                    <Ionicons name="trash-bin" size={20} color="white" />
+                                </Pressable>
+                                <Image source={{ uri: imageUri }} style={styles.image} />
+                            </View>
+                        ))}
+                    </ScrollView>
+                </View>
+            );
+        }
+        return null;
     };
 
     const handleSave = async () => {
-        if (title && description && markerPosition) {
+        if (title && content && markerPosition) {
             const data = {
                 title,
-                content: description,
+                content: content,
                 location: {
                     latitude: markerPosition.latitude,
                     longitude: markerPosition.longitude,
@@ -153,7 +229,7 @@ const AddNotemap: React.FC = () => {
 
             try {
                 if (id) {
-                    await updateNote(id as string, data); // Update note if ID is provided
+                    await updateNote(id as string, data);
                     Alert.alert("Note Updated");
                 } else {
                     await createNote(data); // Create new note
@@ -177,42 +253,36 @@ const AddNotemap: React.FC = () => {
                 <View style={styles.formContainer}>
                     <TextInput style={styles.input} placeholder="Enter Title" value={title} onChangeText={setTitle} placeholderTextColor="#888" />
                     <TextInput
-                        style={[styles.input, styles.descriptionInput]}
-                        placeholder="Enter Description"
-                        value={description}
-                        onChangeText={setDescription}
+                        style={[styles.input, styles.contentInput]}
+                        placeholder="Enter content"
+                        value={content}
+                        onChangeText={setContent}
                         placeholderTextColor="#888"
                         multiline
                     />
                 </View>
-
-                {Platform.OS === "web" ? (
-                    <View style={styles.noMapContainer}>
-                        <Text style={styles.noMapText}>No map available on web platform</Text>
-                    </View>
-                ) : (
-                    <MapView
-                        style={styles.map}
-                        initialRegion={INITIAL_REGION}
-                        showsUserLocation
-                        showsMyLocationButton
-                        provider={PROVIDER_GOOGLE}
-                        ref={mapRef}
-                        onRegionChangeComplete={onRegionChange}
-                        onPress={handleMapPress}
-                        mapPadding={{ top: 10, right: 10, bottom: 10, left: 10 }}
-                    >
-                        {markerPosition && (
-                            <Marker coordinate={markerPosition} title="Selected Location">
-                                <Callout>
-                                    <View style={{ padding: 10 }}>
-                                        <Text style={{ fontSize: 24 }}>Selected Location</Text>
-                                    </View>
-                                </Callout>
-                            </Marker>
-                        )}
-                    </MapView>
-                )}
+                <MapView
+                    style={styles.map}
+                    initialRegion={region}
+                    showsUserLocation
+                    showsMyLocationButton
+                    provider={PROVIDER_GOOGLE}
+                    ref={mapRef}
+                    onRegionChangeComplete={onRegionChange}
+                    onPress={handleMapPress}
+                    mapPadding={{ top: 10, right: 10, bottom: 10, left: 10 }}
+                    region={region}
+                >
+                    {markerPosition && (
+                        <Marker coordinate={markerPosition} title="Selected Location">
+                            <Callout>
+                                <View style={{ padding: 10 }}>
+                                    <Text style={{ fontSize: 24 }}>Selected Location</Text>
+                                </View>
+                            </Callout>
+                        </Marker>
+                    )}
+                </MapView>
 
                 {markerPosition && (
                     <View style={styles.textContainer}>
@@ -226,7 +296,7 @@ const AddNotemap: React.FC = () => {
                 <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.imageScroll}>
                     {renderSelectedImages()}
                 </ScrollView>
-
+                {renderNoteImages()}
                 <Pressable style={[styles.button, styles.saveButton]} onPress={handleSave}>
                     <Text style={styles.buttonText}>Save</Text>
                 </Pressable>
@@ -249,71 +319,61 @@ const styles = StyleSheet.create({
         padding: 5,
     },
     formContainer: {
-        paddingHorizontal: 20,
-        paddingVertical: 10,
+        padding: 10,
+    },
+    input: {
+        height: 50,
+        borderColor: "#ddd",
+        borderWidth: 1,
+        borderRadius: 5,
+        paddingHorizontal: 10,
+        marginBottom: 10,
         backgroundColor: "white",
-        zIndex: 10,
+    },
+    contentInput: {
+        height: 100,
+    },
+    button: {
+        backgroundColor: "#007bff",
+        padding: 15,
+        borderRadius: 5,
+        marginBottom: 10,
+        alignItems: "center",
+    },
+    buttonText: {
+        color: "white",
+        fontSize: 16,
+    },
+    saveButton: {
+        backgroundColor: "#28a745",
+    },
+    imageScroll: {
+        marginVertical: 10,
+    },
+    imageContainer: {
+        marginRight: 10,
+        position: "relative",
     },
     image: {
         width: 100,
         height: 100,
         borderRadius: 10,
-        borderColor: "#ddd",
-        borderWidth: 1,
+        margin: 5,
     },
-    imageContainer: {
-        position: "relative",
-        marginRight: 10,
-    },
-    imageScroll: {
-        marginVertical: 10,
-        maxHeight: 200,
-    },
-    input: {
-        backgroundColor: "#f9f9f9",
-        paddingVertical: 12,
-        paddingHorizontal: 15,
-        borderRadius: 10,
-        borderWidth: 1,
-        borderColor: "#ddd",
+    imagesHeader: {
         fontSize: 16,
-        marginBottom: 10,
-    },
-    descriptionInput: {
-        height: 100,
+        fontWeight: "bold",
+        marginBottom: 5,
     },
     map: {
         width: "100%",
-        height: 400,
-    },
-    noMapContainer: {
-        flex: 1,
-        justifyContent: "center",
-        alignItems: "center",
-    },
-    noMapText: {
-        fontSize: 18,
+        height: 300,
+        marginBottom: 10,
     },
     textContainer: {
         padding: 10,
     },
     text: {
-        fontSize: 14,
-    },
-    button: {
-        backgroundColor: "#007BFF",
-        paddingVertical: 10,
-        paddingHorizontal: 20,
-        borderRadius: 10,
-        marginVertical: 10,
-        marginHorizontal: 20,
-        alignItems: "center",
-    },
-    saveButton: {
-        backgroundColor: "#28a745",
-    },
-    buttonText: {
-        color: "white",
         fontSize: 16,
     },
 });

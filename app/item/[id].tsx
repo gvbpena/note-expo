@@ -1,6 +1,6 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { Text, View, StyleSheet, ScrollView, Image, Modal, TouchableOpacity } from "react-native";
-import { useLocalSearchParams } from "expo-router";
+import { useFocusEffect, useLocalSearchParams } from "expo-router";
 import { getNoteById } from "../../services/note_service";
 import MapView, { Marker, PROVIDER_GOOGLE } from "react-native-maps";
 
@@ -22,19 +22,24 @@ const NoteDetails: React.FC = () => {
     const [noteData, setNoteData] = useState<Note | null>(null);
     const [modalVisible, setModalVisible] = useState(false);
     const [selectedImage, setSelectedImage] = useState<string | null>(null);
+    const fetchNoteData = async () => {
+        try {
+            const response = await getNoteById(id as string);
+            setNoteData(response);
+        } catch (error) {
+            console.error("Failed to fetch note data:", error);
+        }
+    };
 
     useEffect(() => {
-        const fetchNoteData = async () => {
-            try {
-                const response = await getNoteById(id as string);
-                setNoteData(response);
-            } catch (error) {
-                console.error("Failed to fetch note data:", error);
-            }
-        };
-
         fetchNoteData();
     }, [id]);
+
+    useFocusEffect(
+        useCallback(() => {
+            fetchNoteData();
+        }, [])
+    );
 
     if (!noteData) {
         return (
