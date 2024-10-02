@@ -16,16 +16,17 @@ const INITIAL_REGION = {
     longitudeDelta: 0.0421,
 };
 
-export interface Note {
-    id: string;
-    title: string;
-    content: string;
-    location: {
-        latitude: number;
-        longitude: number;
-    };
-    imageUrls: string[];
-}
+// export interface Note {
+//     id: string;
+//     title: string;
+//     content: string;
+//     location: {
+//         latitude: number;
+//         longitude: number;
+//     };
+//     imageUrls: string[];
+//     authorId: string;
+// }
 
 const AddNotemap = () => {
     const navigation = useNavigation(); // Get the navigation prop

@@ -19,11 +19,22 @@
             "adaptiveIcon": {
                 "foregroundImage": "./assets/adaptive-icon.png",
                 "backgroundColor": "#ffffff"
+            },
+            "package": "com.gvbpena.noteexpo",
+            "config": {
+                "googleMaps": {
+                    "apiKey": "AIzaSyC5FLcSOGK2FF2Hr-5Hze2MZ3aDNn-Ug3I"
+                }
             }
         },
         "web": {
             "favicon": "./assets/favicon.png",
             "bundler": "metro"
+        },
+        "extra": {
+            "eas": {
+                "projectId": "84f8320f-e253-4197-a7e9-d3338d75f962"
+            }
         }
     }
 }
