@@ -1,5 +1,6 @@
 import { firestore } from "./firebase"; // Ensure this path is correct
-import { collection, doc, setDoc, updateDoc, getDoc, getDocs, deleteDoc } from "firebase/firestore";
+import { collection, doc, setDoc, updateDoc, getDoc, getDocs, deleteDoc, query, where } from "firebase/firestore";
+import { auth } from "./firebase"; // Add this line to import auth
 
 export interface Note {
     id?: string;
@@ -61,9 +62,40 @@ export const getNoteById = async (id: string) => {
 };
 
 // Get all notes
+// export const getAllNotes = async () => {
+//     try {
+//         const snapshot = await getDocs(collection(firestore, "notes"));
+//         const notes: any[] = [];
+//         snapshot.forEach((doc) => {
+//             const data = doc.data();
+//             notes.push({
+//                 id: doc.id,
+//                 title: data.title,
+//                 content: data.content,
+//                 location: data.location,
+//                 images: data.images,
+//             });
+//         });
+//         return notes;
+//     } catch (error: unknown) {
+//         if (error instanceof Error) {
+//             throw new Error("Failed to fetch notes: " + error.message);
+//         } else {
+//             throw new Error("Failed to fetch notes: An unknown error occurred.");
+//         }
+//     }
+// };
 export const getAllNotes = async () => {
     try {
-        const snapshot = await getDocs(collection(firestore, "notes"));
+        const user = auth.currentUser; // Get the currently logged-in user
+        if (!user) {
+            throw new Error("No user is currently logged in.");
+        }
+
+        const notesRef = collection(firestore, "notes");
+        const q = query(notesRef, where("authorId", "==", user.uid)); // Filter by authorId = user.uid
+        const snapshot = await getDocs(q);
+
         const notes: any[] = [];
         snapshot.forEach((doc) => {
             const data = doc.data();
@@ -72,9 +104,12 @@ export const getAllNotes = async () => {
                 title: data.title,
                 content: data.content,
                 location: data.location,
-                images: data.images,
+                imageUrls: data.imageUrls,
+                createdAt: data.createdAt,
+                authorId: data.authorId,
             });
         });
+
         return notes;
     } catch (error: unknown) {
         if (error instanceof Error) {

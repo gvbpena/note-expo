@@ -1,7 +1,8 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import { Text, View, StyleSheet } from "react-native";
 import MapView, { Marker, Callout, PROVIDER_GOOGLE, LatLng } from "react-native-maps";
 import { getAllNotes, Note } from "../services/note_service"; // Adjust the import based on your file structure
+import { useFocusEffect } from "expo-router";
 
 const INITIAL_REGION = {
     latitude: 37.78825,
@@ -15,22 +16,33 @@ const AddNotemap = () => {
     const [markerPosition, setMarkerPosition] = useState<LatLng | null>(null);
     const [markerText, setMarkerText] = useState<string>("");
     const [notes, setNotes] = useState<Note[]>([]);
-
+    const fetchNotes = async () => {
+        try {
+            const fetchedNotes = await getAllNotes();
+            setNotes(fetchedNotes);
+        } catch (error) {
+            console.error("Error fetching notes:", error);
+        }
+    };
     useEffect(() => {
-        const fetchNotes = async () => {
-            try {
-                const fetchedNotes = await getAllNotes();
-                setNotes(fetchedNotes);
-            } catch (error) {
-                console.error("Error fetching notes:", error);
-            }
-        };
-
         fetchNotes();
     }, []);
 
+    useFocusEffect(
+        useCallback(() => {
+            fetchNotes(); // Refetch notes when the screen comes into focus
+        }, [])
+    );
+
     return (
-        <MapView style={styles.map} initialRegion={INITIAL_REGION} showsUserLocation showsMyLocationButton provider={PROVIDER_GOOGLE} ref={mapRef}>
+        <MapView
+            style={styles.map}
+            // initialRegion={INITIAL_REGION}
+            showsUserLocation
+            showsMyLocationButton
+            provider={PROVIDER_GOOGLE}
+            ref={mapRef}
+        >
             {markerPosition && (
                 <Marker coordinate={markerPosition} title="Selected Location">
                     <Callout>

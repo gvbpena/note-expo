@@ -6,13 +6,12 @@ import ReactNativeAsyncStorage from "@react-native-async-storage/async-storage";
 import { Platform } from "react-native";
 
 const firebaseConfig = {
-    apiKey: "AIzaSyCzVh6Bjm9GsMCtg-ItlNr7OJgbGjdKmKY",
-    authDomain: "expo-notemap.firebaseapp.com",
-    projectId: "expo-notemap",
-    storageBucket: "expo-notemap.appspot.com",
-    messagingSenderId: "587791064915",
-    appId: "1:587791064915:web:0d404b423b5c148e3f0ba6",
-    measurementId: "G-VZ4ES01XSH",
+    apiKey: "AIzaSyCjM46cN2b9oHQK1RYGefgdeVducx-ijP8",
+    authDomain: "notemap-db.firebaseapp.com",
+    projectId: "notemap-db",
+    storageBucket: "notemap-db.appspot.com",
+    messagingSenderId: "542263575364",
+    appId: "1:542263575364:web:abe2389cbdbbdb91418d11",
 };
 
 const app = initializeApp(firebaseConfig);
